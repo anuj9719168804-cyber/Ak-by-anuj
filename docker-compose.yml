@@ -1,0 +1,28 @@
+# Ak API + patched FlareSolverr together.
+# Put the FlareSolverr-Patch source at ./FlareSolverr (copy flaresolver/FlareSolverr from the patch repo).
+services:
+  flaresolverr:
+    build: ./FlareSolverr
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=info
+      - TZ=UTC
+    volumes:
+      - ./FlareSolverr/config:/config
+    restart: unless-stopped
+    # If Chromium crashes on ARM64 (exit code -5 / SIGTRAP), see the patch README's
+    # oracle-cloud-deploy notes (custom seccomp profile).
+
+  ak:
+    build: .
+    container_name: ak-api
+    environment:
+      - PORT=8000
+      - FLARESOLVERR_URL=http://flaresolverr:8191/v1
+      # - TERABOX_COOKIE=ndus=...
+      # - FLARESOLVERR_PROXY=socks5://user:pass@host:1080
+    ports:
+      - "8000:8000"
+    depends_on:
+      - flaresolverr
+    restart: unless-stopped
